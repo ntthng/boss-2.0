@@ -207,18 +207,20 @@
 
     function sendKillTimeToSheet(boss, timeStr) {
   fetch(postURL, {
-    method: "POST",
-    mode: "no-cors",           // ✱ bắt buộc để bypass CORS
-    body: JSON.stringify({     // ✱ không cần headers với no-cors
-      name: boss.name,
-      zone: boss.zone,
-      location: boss.location,
-      killTime: timeStr
-    })
-  });
-  // Vì mode no-cors sẽ không trả về content, 
-  // ta không bắt .then/.catch ở đây để tránh lỗi block.
-  showToast("Đã gửi lên Sheet");  
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    name: boss.name,
+    zone: boss.zone,
+    location: boss.location,
+    killTime: timeStr
+  })
+})
+.then(() => showToast("Đã gửi lên Sheet"))
+.catch(() => showToast("Gửi thất bại"));
+ 
 }
 
 

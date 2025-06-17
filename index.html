@@ -325,21 +325,32 @@
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      applyStoredTheme();
-      fetch(fetchURL)
-        .then(res => res.json())
-        .then(data => {
-          bossList = data.map((b, i) => ({
-            zone: b.zone,
-            location: b.location,
-            name: b.name,
-            level: b.level,
-            respawn: parseFloat(b.respawn),
-            index: i
-          }));
-          renderTable();
-        });
+  applyStoredTheme();
+  fetch(fetchURL)
+    .then(res => res.json())
+    .then(data => {
+      bossList = data.map((b, i) => {
+        const boss = {
+          zone: b.zone,
+          location: b.location,
+          name: b.name,
+          level: b.level,
+          respawn: parseFloat(b.respawn),
+          index: i
+        };
+
+        // Nếu có dữ liệu killTime từ Sheet -> lưu vào localStorage
+        if (b.killTime) {
+          localStorage.setItem("boss_" + i, b.killTime);
+        }
+
+        return boss;
+      });
+
+      renderTable();
     });
+});
+
   </script>
 </body>
 </html>

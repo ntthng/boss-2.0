@@ -360,7 +360,33 @@
         renderTable();
       });
   });
+    function clearTime(bossName) {
+    // Xoá localStorage
+    localStorage.removeItem(`history_${bossName}`);
+    console.log(`🧹 Đã xoá lịch sử local cho boss: ${bossName}`);
 
+    // Gửi POST request lên proxy để xoá killTime
+    fetch('https://46e0630e-7974-462a-a782-1fcc3ec46563-00-2zd01ct6gpchf.pike.replit.dev/proxy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: bossName,
+        killTime: '' // Gửi chuỗi rỗng để xoá killTime
+      })
+    })
+    .then(response => response.text())
+    .then(result => {
+      console.log('☁️ Đã xoá trên Google Sheet:', result);
+      alert(`Đã xoá thời gian boss: ${bossName}`);
+      location.reload();
+    })
+    .catch(error => {
+      console.error('❌ Lỗi khi xoá dữ liệu:', error);
+      alert(`Lỗi xoá dữ liệu boss: ${bossName}`);
+    });
+  }
     </script>
   </body>
   </html>

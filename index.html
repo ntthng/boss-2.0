@@ -5,94 +5,83 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Canh giờ Boss - Lineage2M</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #444; padding: 6px; text-align: left; }
-    input[type="datetime-local"] { background: #222; color: #fff; border: 1px solid #555; }
-    button { padding: 4px 10px; background: #28a745; color: #fff; border: none; cursor: pointer; }
-    button:hover { background: #218838; }
-    .history { font-size: 0.9em; color: #ccc; margin-top: 4px; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 8px; border: 1px solid #ccc; text-align: center; }
+    input[type="datetime-local"] { width: 100%; }
+    button { padding: 5px 10px; }
   </style>
 </head>
 <body>
-  <h2>Canh giờ Boss - Lineage2M</h2>
-  <div id="bossTable">Đang tải dữ liệu...</div>
+  <h1>Canh giờ Boss - Lineage2M</h1>
+  <table id="bossTable">
+    <thead>
+      <tr>
+        <th>Zone</th>
+        <th>Location</th>
+        <th>Name</th>
+        <th>Level</th>
+        <th>Respawn</th>
+        <th>Kill Time</th>
+        <th>Nhập</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
   <script>
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbyo7xVyR5OVsZAx0TB4Ta-H2t-KuNJ7sn1DMqXfJKXN3cqHdngx0MMhYqBnqGHvMcyM/exec";
+    const sheetUrl = "https://script.google.com/macros/s/AKfycbyo7xVyR5OVsZAx0TB4Ta-H2t-KuNJ7sn1DMqXfJKXN3cqHdngx0MMhYqBnqGHvMcyM/exec";
 
-    async function fetchBossData() {
-      const res = await fetch(SHEET_URL);
-      const bosses = await res.json();
-      renderBossTable(bosses);
-    }
+    async function fetchBossList() {
+      try {
+        const res = await fetch(sheetUrl);
+        const data = await res.json();
+        const tbody = document.querySelector("#bossTable tbody");
+        tbody.innerHTML = "";
 
-    function renderBossTable(bosses) {
-      let html = '<table><tr><th>Zone</th><th>Location</th><th>Name</th><th>Level</th><th>Respawn</th><th>Kill Time</th></tr>';
-      bosses.forEach(boss => {
-        const inputId = `kill-${boss.name}`;
-        html += `
-          <tr>
+        data.forEach(boss => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
             <td>${boss.zone}</td>
             <td>${boss.location}</td>
             <td>${boss.name}</td>
             <td>${boss.level}</td>
             <td>${boss.respawn}</td>
-            <td>
-              <input type="datetime-local" id="${inputId}">
-              <button onclick="submitKillTime('${boss.name}', '${boss.zone}', '${boss.location}', '${inputId}')">Lưu</button>
-              <div class="history" id="hist-${boss.name}"></div>
-            </td>
-          </tr>
-        `;
-      });
-      html += '</table>';
-      document.getElementById("bossTable").innerHTML = html;
-
-      bosses.forEach(boss => showHistory(boss.name));
+            <td><input type="datetime-local" id="kill-${boss.name}"></td>
+            <td><button onclick="submitKillTime('${boss.name}', '${boss.zone}', '${boss.location}')">Gửi</button></td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (e) {
+        alert("Lỗi tải dữ liệu từ Google Sheet.");
+        console.error(e);
+      }
     }
 
-    function submitKillTime(name, zone, location, inputId) {
-      const input = document.getElementById(inputId);
-      const killTime = new Date(input.value).toISOString();
-      if (!killTime) return alert("Chọn thời gian hợp lệ!");
+    async function submitKillTime(name, zone, location) {
+      const input = document.querySelector(`#kill-${name}`);
+      const killTime = input.value;
+      if (!killTime) return alert("Vui lòng chọn thời gian kill.");
 
-      const data = { name, zone, location, killTime };
+      const payload = { name, zone, location, killTime };
 
-      // Gửi POST lên Google Sheet
-      fetch(SHEET_URL, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
-      })
-      .then(res => res.text())
-      .then(() => {
-        saveLocalHistory(name, killTime);
-        showHistory(name);
-        alert("Đã lưu thời gian tiêu diệt!");
-      })
-      .catch(err => {
+      try {
+        const res = await fetch(sheetUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+        alert("Đã gửi thời gian kill boss thành công!");
+        console.log("Phản hồi:", text);
+      } catch (err) {
+        alert("Lỗi khi gửi dữ liệu!");
         console.error(err);
-        alert("Lỗi khi gửi dữ liệu.");
-      });
+      }
     }
 
-    function saveLocalHistory(name, time) {
-      const key = `history-${name}`;
-      let history = JSON.parse(localStorage.getItem(key) || "[]");
-      history.unshift(time);
-      history = history.slice(0, 5); // chỉ giữ 5 lần gần nhất
-      localStorage.setItem(key, JSON.stringify(history));
-    }
-
-    function showHistory(name) {
-      const key = `history-${name}`;
-      let history = JSON.parse(localStorage.getItem(key) || "[]");
-      const el = document.getElementById(`hist-${name}`);
-      el.innerHTML = "Lịch sử: " + history.map(t => new Date(t).toLocaleString()).join(" | ");
-    }
-
-    fetchBossData();
+    fetchBossList();
   </script>
 </body>
 </html>

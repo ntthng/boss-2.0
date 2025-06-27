@@ -243,7 +243,10 @@
 
       Object.entries(bosses).forEach(([id, boss]) => {
         const card = document.createElement("div");
-        card.className = "boss-card";
+card.className = "boss-card";
+if (boss.chance === 100) {
+  card.style.backgroundColor = "#144d14"; // màu xanh lá cây
+}
         card.setAttribute("data-name", boss.name);
         card.setAttribute("data-location", boss.location);
         card.setAttribute("data-zone", boss.zone);
@@ -271,7 +274,11 @@
         container.appendChild(card);
 
         const inputEl = document.getElementById(inputId);
-        if (boss.killedTime) inputEl.value = new Date(boss.killedTime).toISOString().slice(0, 16);
+        if (boss.killedTime) {
+  inputEl.value = new Date(boss.killedTime).toISOString().slice(0, 16);
+} else {
+  inputEl.value = new Date().toISOString().slice(0, 16);
+}
         const timeEl = document.getElementById(timeId);
         const logEl = document.getElementById(logId);
         const toggleBtn = document.getElementById(toggleId);
@@ -316,8 +323,8 @@
           const offsetMs = killedOffsetMap(boss.level) * 60 * 1000;
           const respawnMs = boss.respawn * 60 * 60 * 1000;
 
-          if (now.getTime() >= nextRespawn.getTime() + offsetMs) {
-            killedTime = new Date(nextRespawn.getTime() + offsetMs);
+          if (now.getTime() >= nextRespawn.getTime() ) {
+            killedTime = new Date(nextRespawn.getTime() );
             nextRespawn = new Date(killedTime.getTime() + respawnMs);
             bossRespawnMap[boss.name] = nextRespawn;
             logs.unshift(`• Auto Kill: ${formatTime(killedTime)}\n  → Respawn: ${formatTime(nextRespawn)}\n• [RAW] ${nextRespawn.toISOString()}`);
@@ -345,7 +352,8 @@
     const m = time.getMinutes().toString().padStart(2, "0");
     const d = time.getDate();
     const month = time.getMonth() + 1;
-    return `**${index + 1}.** ${name} | ${boss.location} | ${h}:${m} ${d}/${month}`;
+    const chanceText = boss.chance ? `${boss.chance}% xuất hiện` : "??% xuất hiện";
+return `**${index + 1}.** ${name} | ${boss.location} | ${h}:${m} ${d}/${month} | ${chanceText}`;
   }).filter(Boolean);
 
   document.getElementById("topLogList").innerHTML = logs.join("\n").replace(/\*\*(\d+)\.\*\*/g, "<strong>$1.</strong>");
@@ -387,7 +395,8 @@
   const m = date.getMinutes().toString().padStart(2, "0");
   const d = date.getDate();
   const month = date.getMonth() + 1;
-  const result = `${boss.name} | ${boss.location} | ${h}:${m} ${d}/${month}`;
+  const chanceText = boss.chance ? `${boss.chance}% xuất hiện` : "??% xuất hiện";
+const result = `${boss.name} | ${boss.location} | ${h}:${m} ${d}/${month} | ${chanceText}`;
   navigator.clipboard.writeText(result).then(() => alert("✅ Đã sao chép log!"));
 }
 
